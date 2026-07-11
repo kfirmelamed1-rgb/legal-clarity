@@ -114,6 +114,12 @@ User has Ollama running locally and wanted to test the site for free before spen
 
 **Practical guidance settled on:** local/Ollama mode is good for testing flows, Kickstart interviews, and moderate single documents; the paid API path (Sonnet 5, 1M token context, live search) is the right tool for full case files and real reliance.
 
+## 11. Free path + published live
+
+Verified there is no way to give visitors free Claude usage *inside* the site (no free API tier; "Sign in with Claude" draws from prepaid credits that free accounts don't get). Built the honest alternative: a "Use free on Claude.ai" button that copies the full expert prompt (case type + state, always with the live-search instructions) and opens claude.ai, where a free account works. Panel sits above the API-key panel; API path relabeled "Full experience."
+
+Deployed to GitHub Pages: repo `kfirmelamed1-rgb/legal-clarity` (public, MIT), live at **https://kfirmelamed1-rgb.github.io/legal-clarity/**. Zero hosting cost. To update the live site: commit and `git push`; Pages rebuilds in about a minute. Donation button agreed in principle — waiting on the user to create a GitHub Sponsors or Ko-fi link; wording must be "Support this project" (not tax-deductible; no registered 501(c)(3)).
+
 ---
 
 ## Current architecture summary
