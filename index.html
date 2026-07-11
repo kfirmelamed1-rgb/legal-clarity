@@ -133,6 +133,7 @@
   button.send:hover:not(:disabled){background:var(--primary-deep)}
   button.send:active:not(:disabled){transform:translateY(1px)}
   button.send:disabled{opacity:0.55;cursor:default}
+  button.freebtn{width:100%;margin:0 0 4px;padding:9px 14px}
   .files{font-size:12.5px;color:var(--muted)}
   .files:not(:empty){margin-bottom:8px}
   .filechip{display:inline-flex;align-items:center;gap:6px;background:var(--panel);border:1px solid var(--line);
@@ -208,7 +209,14 @@
     </section>
 
     <section class="panel">
-      <h2 class="panel-title">Your access key</h2>
+      <h2 class="panel-title">Free option — no key, no cost</h2>
+      <button class="send freebtn" id="freeBtn" type="button">Use free on Claude.ai</button>
+      <div class="note">Copies an expert prompt for your case type and state, then opens Claude.ai. Paste it there as your first message and chat for free — a free Claude account is all you need.</div>
+      <div class="note" id="freeDone" hidden><b>Prompt copied.</b> On the Claude.ai tab that just opened, sign in (or sign up free), paste into the message box, and send. Then ask your questions there.</div>
+    </section>
+
+    <section class="panel">
+      <h2 class="panel-title">Full experience — your access key</h2>
       <div class="field">
         <label for="key">Anthropic API key</label>
         <input id="key" type="password" placeholder="sk-ant-..." autocomplete="off">
@@ -527,11 +535,12 @@ Debrief, out of role, honestly: (1) which answers would have moved a real panel;
   }
 };
 
-function jurisdictionHeader(){
+function jurisdictionHeader(noSearch){
+  if (noSearch === undefined) noSearch = localMode();
   const state = ($('#state').value || '').trim() || 'the selected state';
   const county = ($('#county').value || '').trim();
   const loc = county ? state + ', ' + county + ' County' : state;
-  const searchRule = localMode()
+  const searchRule = noSearch
     ? `You have NO web search tool in this session. Never guess a statute, rule, form, or case number: when you are not certain it is current and correct, say so plainly and point the user to the exact official source for ${state} (the state legislature's official code website and the state court system's official website) to look it up.`
     : `Before giving substantive analysis in any answer, use the web_search tool to establish the current controlling authorities for ${state} on the question, from official primary sources: the state legislature's official statute/code website and the state court system's official website (and for a named county, that county court's site). Cite what you find with its URL. Never rely on memory for a statute, rule, form, or case number - search and verify it.`;
   return `GOVERNING JURISDICTION: ${loc}. Apply the family law of ${state}.
@@ -540,16 +549,16 @@ ${searchRule}
 `;
 }
 
-function systemPrompt(){
+function systemPrompt(noSearch){
   const ct = $('#casetype').value.toLowerCase();
-  if (/appeal/.test(ct)) return jurisdictionHeader() + APPEAL_BASE + TAILS.appeal[mode];
+  if (/appeal/.test(ct)) return jurisdictionHeader(noSearch) + APPEAL_BASE + TAILS.appeal[mode];
   let area = 'custody';
   if (/spousal|partner/.test(ct)) area = 'spousalsupport';
   else if (/support/.test(ct)) area = 'childsupport';
   else if (/propert/.test(ct)) area = 'property';
   else if (/restrain|domestic|dvro/.test(ct)) area = 'dvro';
   else if (/other/.test(ct)) area = 'other';
-  return jurisdictionHeader() + TRIAL_CORE + '\n\n' + TOPICS[area] + TAILS.trial[mode];
+  return jurisdictionHeader(noSearch) + TRIAL_CORE + '\n\n' + TOPICS[area] + TAILS.trial[mode];
 }
 
 // ---- state ----
@@ -563,6 +572,22 @@ $('#state').innerHTML = STATES.map(s => `<option${s === 'California' ? ' selecte
 
 $('#key').value = localStorage.getItem('anthropic_key') || '';
 $('#key').oninput = e => localStorage.setItem('anthropic_key', e.target.value.trim());
+
+// ---- free path: copy the expert prompt and open Claude.ai ----
+$('#freeBtn').onclick = () => {
+  const text = 'Follow these instructions for our entire conversation. You have web search in this chat; use it wherever the instructions call for the web_search tool. Where they mention other tools on "this site", do the equivalent here in chat. Start by greeting me and asking how you can help with my case.\n\n'
+    + systemPrompt(false);
+  const done = () => { $('#freeDone').hidden = false; };
+  window.open('https://claude.ai/new', '_blank', 'noopener');
+  navigator.clipboard.writeText(text).then(done, () => {
+    // ponytail: execCommand fallback for older browsers / non-secure contexts
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); done(); }
+    catch (e) { alert('Could not copy automatically. Please try a modern browser.'); }
+    ta.remove();
+  });
+};
 
 // remember the user's case setup between visits
 for (const id of ['state', 'county', 'casetype']) {
