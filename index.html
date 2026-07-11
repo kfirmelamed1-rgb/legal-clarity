@@ -216,6 +216,13 @@
     </section>
 
     <section class="panel">
+      <h2 class="panel-title">Big case? Pair with NotebookLM</h2>
+      <button class="send freebtn" id="nlmBtn" type="button">Set up NotebookLM (free)</button>
+      <div class="note">For cases with lots of documents. NotebookLM (by Google, free) holds your whole case file and answers <b>only from your documents</b>, with citations. Use it to master your record — timeline, exhibit list, the other side's contradictions — then bring what you find back here for the law and strategy.</div>
+      <div class="note" id="nlmDone" hidden><b>Prompt copied.</b> On the NotebookLM tab: create a notebook, upload your case documents as sources, then paste the prompt into the chat box and send.</div>
+    </section>
+
+    <section class="panel">
       <h2 class="panel-title">Full experience — your access key</h2>
       <div class="field">
         <label for="key">Anthropic API key</label>
@@ -574,11 +581,9 @@ $('#key').value = localStorage.getItem('anthropic_key') || '';
 $('#key').oninput = e => localStorage.setItem('anthropic_key', e.target.value.trim());
 
 // ---- free path: copy the expert prompt and open Claude.ai ----
-$('#freeBtn').onclick = () => {
-  const text = 'Follow these instructions for our entire conversation. You have web search in this chat; use it wherever the instructions call for the web_search tool. Where they mention other tools on "this site", do the equivalent here in chat. Start by greeting me and asking how you can help with my case.\n\n'
-    + systemPrompt(false);
-  const done = () => { $('#freeDone').hidden = false; };
-  window.open('https://claude.ai/new', '_blank', 'noopener');
+function copyAndOpen(text, url, doneId){
+  const done = () => { $(doneId).hidden = false; };
+  window.open(url, '_blank', 'noopener');
   navigator.clipboard.writeText(text).then(done, () => {
     // ponytail: execCommand fallback for older browsers / non-secure contexts
     const ta = document.createElement('textarea');
@@ -587,6 +592,33 @@ $('#freeBtn').onclick = () => {
     catch (e) { alert('Could not copy automatically. Please try a modern browser.'); }
     ta.remove();
   });
+}
+
+$('#freeBtn').onclick = () => {
+  const text = 'Follow these instructions for our entire conversation. You have web search in this chat; use it wherever the instructions call for the web_search tool. Where they mention other tools on "this site", do the equivalent here in chat. Start by greeting me and asking how you can help with my case.\n\n'
+    + systemPrompt(false);
+  copyAndOpen(text, 'https://claude.ai/new', '#freeDone');
+};
+
+// ---- big-case path: copy a record-analysis prompt and open NotebookLM ----
+$('#nlmBtn').onclick = () => {
+  const state = ($('#state').value || '').trim() || 'their state';
+  const ct = $('#casetype').value;
+  const text = `Follow these instructions for this entire notebook. I am a self-represented litigant in a ${ct} case in ${state}, and the sources in this notebook are my case file.
+
+Work ONLY from the uploaded sources. Never invent, assume, or fill in a fact that is not in them. Cite the source for every statement you make. If a source does not answer my question, say so plainly.
+
+Your jobs, whenever I ask:
+1. TIMELINE - build a dated chronology of the events in the sources, each entry with its citation. Flag gaps where a period has no documentation.
+2. EXHIBIT INDEX - for each document: what it is, its date, who wrote it, and what it tends to prove - including anything in it that hurts my position. I need the honest read, not the friendly one.
+3. CONTRADICTIONS - find places where the other side's statements conflict with each other or with the documents. Quote both passages exactly, with citations.
+4. FACT PULLS - when I name a topic (income, parenting time, messages, a specific incident), pull every relevant passage verbatim with citations.
+5. CLAIM CHECK - when I paste a draft declaration or argument, check each factual claim against the sources and flag every claim that is unsupported or contradicted.
+
+You do not analyze the law, predict outcomes, or give legal advice - I use a separate tool for that and I bring your record findings there. Your only job is helping me know my own record cold.
+
+Start by listing the sources you can see and asking which job I need first.`;
+  copyAndOpen(text, 'https://notebooklm.google.com/', '#nlmDone');
 };
 
 // remember the user's case setup between visits
