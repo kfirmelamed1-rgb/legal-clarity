@@ -120,6 +120,10 @@ Verified there is no way to give visitors free Claude usage *inside* the site (n
 
 Deployed to GitHub Pages: repo `kfirmelamed1-rgb/legal-clarity` (public, MIT), live at **https://kfirmelamed1-rgb.github.io/legal-clarity/**. Zero hosting cost. To update the live site: commit and `git push`; Pages rebuilds in about a minute. Donation button agreed in principle — waiting on the user to create a GitHub Sponsors or Ko-fi link; wording must be "Support this project" (not tax-deductible; no registered 501(c)(3)).
 
+## 12. NotebookLM pairing for big cases
+
+NotebookLM has no public API, so direct integration is impossible — built the copy-prompt pattern instead (same as the free Claude.ai path): a "Big case? Pair with NotebookLM" panel whose button copies a record-analysis prompt (adapted to case type + state) and opens notebooklm.google.com. The prompt is deliberately record-only — timeline, exhibit index, contradictions, verbatim fact pulls, claim-checking drafts, always with source citations, never inventing facts, explicitly NOT doing legal analysis (that stays in this site). Division of labor: NotebookLM = the record, this site = the law and strategy.
+
 ---
 
 ## Current architecture summary
