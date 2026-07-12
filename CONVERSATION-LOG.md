@@ -124,6 +124,10 @@ Deployed to GitHub Pages: repo `kfirmelamed1-rgb/legal-clarity` (public, MIT), l
 
 NotebookLM has no public API, so direct integration is impossible — built the copy-prompt pattern instead (same as the free Claude.ai path): a "Big case? Pair with NotebookLM" panel whose button copies a record-analysis prompt (adapted to case type + state) and opens notebooklm.google.com. The prompt is deliberately record-only — timeline, exhibit index, contradictions, verbatim fact pulls, claim-checking drafts, always with source citations, never inventing facts, explicitly NOT doing legal analysis (that stays in this site). Division of labor: NotebookLM = the record, this site = the law and strategy.
 
+## 13. Save / Load work (local file, no accounts)
+
+User asked for sign-in accounts so returning users have their case waiting. Advised against server-side accounts for this audience: storing custody/DV/financial data on a server is a breach + subpoena + shared-device safety risk (a DV survivor is safer when nothing persists in an account), and it breaks the $0 constraint. The site's no-server design is itself a safety feature. Built the safe alternative instead: **Save my work / Load work** buttons that export/import a JSON file on the user's own device — chat history, case setup, mode, and attachments. Deliberately does NOT auto-persist the conversation to localStorage (silent persistence is dangerous on shared/monitored machines) and deliberately excludes the API key from the save file. Load reconstructs the transcript from history (user bubbles strip the context block via the `--- QUESTION / REQUEST ---` marker; assistant bubbles re-render through md()). Bad/foreign files rejected via the `app: 'pro-se-legal-clarity'` marker.
+
 ---
 
 ## Current architecture summary
