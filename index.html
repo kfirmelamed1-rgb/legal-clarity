@@ -235,6 +235,15 @@
         <div class="note" id="ollamaNote" hidden>Test mode: answers come from your local model with <b>no live law search</b>. Use it to try the experience, not for real legal reliance.</div>
       </div>
     </section>
+
+    <section class="panel">
+      <h2 class="panel-title">Save &amp; load your work</h2>
+      <button class="send freebtn" id="saveBtn" type="button">Save my work to a file</button>
+      <button class="send freebtn" id="loadBtn" type="button">Load work from a file</button>
+      <input type="file" id="loadFile" accept=".json,application/json" hidden>
+      <div class="note">Saves everything — your chat, case setup, and notes — to a file on <b>your own device</b>. Nothing is sent to any server and no account is needed. Keep the file somewhere private, and load it anytime to pick up where you left off, even on another computer.</div>
+      <div class="note" id="saveDone" hidden><b>Saved.</b> Look in your Downloads folder for the file, and keep it somewhere private.</div>
+    </section>
   </aside>
 
   <main>
@@ -620,6 +629,56 @@ You do not analyze the law, predict outcomes, or give legal advice - I use a sep
 Start by listing the sources you can see and asking which job I need first.`;
   copyAndOpen(text, 'https://notebooklm.google.com/', '#nlmDone');
 };
+
+// ---- save / load work to a file on the user's own device (no server) ----
+const SAVE_MARK = '--- QUESTION / REQUEST ---\n';
+function saveWork(){
+  const data = {
+    app: 'pro-se-legal-clarity', version: 1, savedAt: new Date().toISOString(),
+    state: $('#state').value, county: $('#county').value, casetype: $('#casetype').value,
+    mode, history, attachments
+  };
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(data)], { type: 'application/json' }));
+  a.download = 'my-case-' + new Date().toISOString().slice(0, 10) + '.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(a.href);
+  $('#saveDone').hidden = false;
+}
+function renderTranscript(){
+  $('#chatInner').innerHTML = '';
+  if (!history.length) { greet(); return; }
+  for (const m of history){
+    const c = typeof m.content === 'string' ? m.content : '';
+    if (m.role === 'user'){
+      const i = c.indexOf(SAVE_MARK);
+      addMsg('You', i >= 0 ? c.slice(i + SAVE_MARK.length) : '(documents attached)', 'user');
+    } else if (m.role === 'assistant'){
+      addMsg('Legal Clarity', c);
+    }
+  }
+}
+async function loadWork(file){
+  let data;
+  try { data = JSON.parse(await file.text()); }
+  catch { alert('That file could not be read. Choose a case file you saved from this site.'); return; }
+  if (!data || data.app !== 'pro-se-legal-clarity'){
+    alert('That does not look like a case file saved from this site.'); return;
+  }
+  if (data.state) $('#state').value = data.state;
+  if (data.county !== undefined) $('#county').value = data.county;
+  if (data.casetype) $('#casetype').value = data.casetype;
+  for (const id of ['state','county','casetype']) localStorage.setItem('case_' + id, $('#' + id).value);
+  mode = data.mode || 'kickstart';
+  document.querySelectorAll('.mode').forEach(x => x.classList.toggle('active', x.dataset.mode === mode));
+  history = Array.isArray(data.history) ? data.history : [];
+  attachments = Array.isArray(data.attachments) ? data.attachments : [];
+  renderFiles();
+  renderTranscript();
+}
+$('#saveBtn').onclick = saveWork;
+$('#loadBtn').onclick = () => $('#loadFile').click();
+$('#loadFile').onchange = e => { if (e.target.files[0]) loadWork(e.target.files[0]); e.target.value = ''; };
 
 // remember the user's case setup between visits
 for (const id of ['state', 'county', 'casetype']) {
